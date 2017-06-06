@@ -6,33 +6,10 @@
 # description: Android Virtual Device #1.
 #
 
-# Source function library.
-. /etc/init.d/nv-avd-commons
-
 SERVICE_NAME=nv-avd-1
-SERVICE_LOG_FILE=$HOME/$SERVICE_NAME.log
 DEVICE_NAME=android-22_google-apis_x86
 DEVICE_RESOLUTION=1080x1920
 ANDROID_SYSTEM_IMAGES="system-images;android-22;google_apis;x86"
 
-create-log-file
-
-case "$1" in
-    start)
-        start
-        ;;
-    stop)
-        stop
-        ;;
-    status)
-        status
-        ;;
-    restart)
-        restart
-        ;;
-    *)
-        log "Usage: $SERVICE_NAME {start|stop|status|restart}"
-        exit 1
-        ;;
-esac
-exit $?
+# Commons util file below need variable SERVICE_NAME, DEVICE_NAME, DEVICE_RESOLUTION and ANDROID_SYSTEM_IMAGES.
+. /etc/init.d/nv-avd-commons

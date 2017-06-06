@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# nv-avd-1
+# nv-appium
 #
 # chkconfig: 2345 10 90
-# description: Android Virtual Device #1.
+# description: Run Appium server.
 #
 
 # Source function library.
@@ -11,18 +11,60 @@
 
 SERVICE_NAME=nv-appium
 SERVICE_LOG_FILE=$HOME/$SERVICE_NAME.log
+PROGRAM_NAME=Appium
+PROGRAM_REGEX="[n]ode.*appium"
+
+create-log-file
 
 start() {
-    log "STARTING SERVICE \"$SERVICE_NAME\" ..."
-    find-and-kill-avd
-    create-avd
-    PID=$(find-avd-pid)
-    log "AVD \"$DEVICE_NAME\" is up and running with PID \"$PID\" ..."
+    log "===== STARTING SERVICE \"$SERVICE_NAME\" ====="
+    show-info
+    find-and-kill-program
+    run-appium
+    log ""
+    log "===== END OF STARTING SERVICE \"$SERVICE_NAME\" ====="
+    log ""
 }
 
 stop() {
-    log "SHUTTING DOWN SERVICE \"$SERVICE_NAME\" ..."
-    find-and-kill-avd
+    log "===== SHUTTING DOWN SERVICE \"$SERVICE_NAME\" ====="
+    show-info
+    find-and-kill-program
+    log ""
+    log "===== END OF SHUTTING DOWN SERVICE \"$SERVICE_NAME\" ====="
+    log ""
+}
+
+restart() {
+    log "RESTARTING SERVICE \"$SERVICE_NAME\" ..."
+    stop
+    start
+}
+
+status() {
+    check-program-status
+}
+
+run-appium() {
+    # Starting Appium
+    RUN_APPIUM_CMD="appium >> $SERVICE_LOG_FILE 2>&1 &"
+    log "Run Appium: su - $USER -c \"$RUN_APPIUM_CMD\""
+    su - $USER -c "$RUN_APPIUM_CMD"
+
+    # Give time for appium to up and then check the status
+    sleep 5
+    status
+}
+
+show-info() {
+    log ""
+    log "SERVICE VARIABLES:"
+    log "USER=$USER"
+    log "HOME=$HOME"
+    log "PATH=$PATH"
+    log "SERVICE_NAME=$SERVICE_NAME"
+    log "SERVICE_LOG_FILE=$SERVICE_LOG_FILE"
+    log ""
 }
 
 case "$1" in
@@ -36,12 +78,10 @@ case "$1" in
         status
         ;;
     restart)
-        log "RESTARTING SERVICE \"$SERVICE_NAME\" ..."
-        stop
-        start
+        restart
         ;;
     *)
-        echo "Usage: <servicename> {start|stop|status|restart}"
+        show-usage
         exit 1
         ;;
 esac

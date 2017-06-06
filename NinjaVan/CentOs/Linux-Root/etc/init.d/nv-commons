@@ -9,10 +9,57 @@ export ANDROID_SDK_PLATFORM_TOOLS=$ANDROID_HOME/platform-tools
 export ANDROID_SDK_EMULATOR=$ANDROID_HOME/emulator
 export PATH=$PATH:$ANDROID_SDK_TOOLS_BIN:$ANDROID_SDK_PLATFORM_TOOLS:$ANDROID_SDK_EMULATOR
 
+find-and-kill-program() {
+    log "Finding and killing $PROGRAM_NAME ..."
+    PID=$(find-program-pid $PROGRAM_NAME $PROGRAM_REGEX)
+
+    if [ -z "$PID" ]; then
+        log "Checking $PROGRAM_NAME: $PROGRAM_NAME is not running."
+    else
+        log "Checking $PROGRAM_NAME: $PROGRAM_NAME is running with PID \"$PID\"."
+        log "Killing $PROGRAM_NAME ..."
+        kill $PID
+    fi
+}
+
+find-program-pid() {
+    log "Finding $PROGRAM_NAME's PID: ps aux | grep -e \"$PROGRAM_REGEX\""
+    PS_RESULT=$(ps aux | grep -e "$PROGRAM_REGEX")
+
+    if [ -z "$PS_RESULT" ]; then
+        log "PS Result: -"
+    else
+        log "PS Result:\n$PS_RESULT"
+    fi
+
+    PID=$(ps aux | grep -e "$PROGRAM_REGEX" | awk '{print $2}')
+
+    # 'echo $PID' is used to return string value.
+    echo $PID
+}
+
+check-program-status() {
+    PID=$(find-program-pid)
+
+    if [ -z "$PID" ]; then
+        log "$PROGRAM_NAME is not running."
+    else
+        log "$PROGRAM_NAME is running with PID \"$PID\"."
+    fi
+}
+
 create-log-file() {
     if [ ! -f $SERVICE_LOG_FILE ]; then
         touch $SERVICE_LOG_FILE
     fi
 
     chown $USER:$USER $SERVICE_LOG_FILE
+}
+
+show-usage() {
+    log "Usage: $SERVICE_NAME {start|stop|status|restart}"
+}
+
+log() {
+    echo -e "[$SERVICE_NAME] $(date +%Y-%m-%d:%H:%M:%S): $1" >> $SERVICE_LOG_FILE
 }
