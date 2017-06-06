@@ -1,0 +1,94 @@
+#!/bin/bash
+
+# Source function library.
+. /etc/init.d/nv-commons
+
+chgrp kvm /dev/kvm
+chmod 777 /dev/kvm
+
+start() {
+    log "===== STARTING SERVICE \"$SERVICE_NAME\" ====="
+    show-info
+    find-and-kill-avd
+    create-and-run-avd
+    log "===== END OF STARTING SERVICE \"$SERVICE_NAME\" ====="
+    log ""
+}
+
+stop() {
+    log "===== SHUTTING DOWN SERVICE \"$SERVICE_NAME\" ====="
+    show-info
+    find-and-kill-avd
+    log "===== END OF SHUTTING DOWN SERVICE \"$SERVICE_NAME\" ====="
+    log ""
+}
+
+restart() {
+    log "RESTARTING SERVICE \"$SERVICE_NAME\" ..."
+    stop
+    start
+}
+
+show-info() {
+    log ""
+    log "SERVICE VARIABLES:"
+    log "USER=$USER"
+    log "HOME=$HOME"
+    log "SERVICE_NAME=$SERVICE_NAME"
+    log "SERVICE_LOG_FILE=$SERVICE_LOG_FILE"
+    log "DEVICE_NAME=$DEVICE_NAME"
+    log "DEVICE_RESOLUTION=$DEVICE_RESOLUTION"
+    log "ANDROID_SYSTEM_IMAGES=$ANDROID_SYSTEM_IMAGES"
+    log ""
+}
+
+create-and-run-avd() {
+    # rm -R $HOME/.android
+
+    # Creating AVD
+    CREATE_AVD_CMD="avdmanager create avd -d 8 -n $DEVICE_NAME -k \"$ANDROID_SYSTEM_IMAGES\" -f >> $SERVICE_LOG_FILE 2>&1"
+    log "Create AVD: su - $USER -c \"$CREATE_AVD_CMD\""
+    su - $USER -c "$CREATE_AVD_CMD"
+
+    # Running emulator
+    RUN_AVD_CMD="emulator -avd $DEVICE_NAME -skin $DEVICE_RESOLUTION -no-window -no-audio -gpu swiftshader >> $SERVICE_LOG_FILE 2>&1 &"
+    log "Run AVD: su - $USER -c \"$RUN_AVD_CMD\""
+    su - $USER -c "$RUN_AVD_CMD"
+
+    # Check emulator
+    status
+}
+
+find-and-kill-avd() {
+    log "Finding and killing AVD ..."
+    PID=$(find-avd-pid)
+
+    if [ $PID ]; then
+        log "Checking AVD: AVD \"$DEVICE_NAME\" is running with PID \"$PID\"."
+        log "Killing AVD \"$DEVICE_NAME\" ..."
+        kill $PID
+    else
+        log "Checking AVD: AVD \"$DEVICE_NAME\" is not running."
+    fi
+}
+
+find-avd-pid() {
+    PID=$(ps aux | grep -e "[-]avd $DEVICE_NAME" | awk '{print $2}')
+    log "Find PID of AVD \"$DEVICE_NAME\": $PID"
+    # 'echo $PID' is used to return string value.
+    echo $PID
+}
+
+status() {
+    PID=$(find-avd-pid)
+
+    if [ $PID ]; then
+        log "AVD \"$DEVICE_NAME\" is running with PID \"$PID\"."
+    else
+        log "AVD \"$DEVICE_NAME\" is not running."
+    fi
+}
+
+log() {
+    echo "[$SERVICE_NAME] $(date +%Y-%m-%d:%H:%M:%S): $1" >> $SERVICE_LOG_FILE
+}

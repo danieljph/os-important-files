@@ -1,0 +1,18 @@
+#!/bin/bash
+
+USER=ferdinand
+HOME=/home/$USER
+
+export ANDROID_HOME=$HOME/Programs/android-sdk
+export ANDROID_SDK_TOOLS_BIN=$ANDROID_HOME/tools/bin
+export ANDROID_SDK_PLATFORM_TOOLS=$ANDROID_HOME/platform-tools
+export ANDROID_SDK_EMULATOR=$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_SDK_TOOLS_BIN:$ANDROID_SDK_PLATFORM_TOOLS:$ANDROID_SDK_EMULATOR
+
+create-log-file() {
+    if [ ! -f $SERVICE_LOG_FILE ]; then
+        touch $SERVICE_LOG_FILE
+    fi
+
+    chown $USER:$USER $SERVICE_LOG_FILE
+}

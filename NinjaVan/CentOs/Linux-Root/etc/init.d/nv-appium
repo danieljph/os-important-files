@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# nv-avd-1
+#
+# chkconfig: 2345 10 90
+# description: Android Virtual Device #1.
+#
+
+# Source function library.
+. /etc/init.d/nv-commons
+
+SERVICE_NAME=nv-appium
+SERVICE_LOG_FILE=$HOME/$SERVICE_NAME.log
+
+start() {
+    log "STARTING SERVICE \"$SERVICE_NAME\" ..."
+    find-and-kill-avd
+    create-avd
+    PID=$(find-avd-pid)
+    log "AVD \"$DEVICE_NAME\" is up and running with PID \"$PID\" ..."
+}
+
+stop() {
+    log "SHUTTING DOWN SERVICE \"$SERVICE_NAME\" ..."
+    find-and-kill-avd
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status
+        ;;
+    restart)
+        log "RESTARTING SERVICE \"$SERVICE_NAME\" ..."
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: <servicename> {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
+exit $?
